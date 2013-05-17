@@ -14,6 +14,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -26,8 +27,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
-public class MVNPEntityListener implements Listener {
-
+public class MVNPEntityListener implements Listener
+{
     private MultiverseNetherPortals plugin;
     private MVNameChecker nameChecker;
     private MVLinkChecker linkChecker;
@@ -42,7 +43,8 @@ public class MVNPEntityListener implements Listener {
     // we can use this cache to avoid a TON of unrequired calls to the
     // On entity portal touch calculations.
 
-    public MVNPEntityListener(MultiverseNetherPortals plugin) {
+    public MVNPEntityListener(MultiverseNetherPortals plugin)
+    {
         this.plugin = plugin;
         this.nameChecker = new MVNameChecker(this.plugin);
         this.linkChecker = new MVLinkChecker(this.plugin);
@@ -54,150 +56,198 @@ public class MVNPEntityListener implements Listener {
         this.locationManipulation = this.plugin.getCore().getLocationManipulation();
 
     }
-
-    protected void shootPlayer(Player p, Block block, PortalType type) {
-        if (!plugin.isUsingBounceBack()) {
-            this.plugin.log(Level.FINEST, "You said not to use bounce back so the player is free to walk into portal!");
+    
+    protected void shootEntity(Entity e, Block block, PortalType type)
+    {
+        if(!plugin.isUsingBounceBack())
+        {
+            this.plugin.log(Level.FINEST, "You said not to use bounce back so the entity is free to walk into portal!");
             return;
         }
-        this.playerErrors.put(p.getName(), new Date());
+        if(e instanceof Player)
+        {
+            this.playerErrors.put(((Player)e).getName(), new Date());
+        }
         double myconst = 2;
         double newVecX = 0;
         double newVecZ = 0;
         // Determine portal axis:
-        BlockFace face = p.getLocation().getBlock().getFace(block);
-        if (block.getRelative(BlockFace.EAST).getType() == Material.PORTAL || block.getRelative(BlockFace.WEST).getType() == Material.PORTAL) {
+        BlockFace face = e.getLocation().getBlock().getFace(block);
+        if(block.getRelative(BlockFace.EAST).getType() == Material.PORTAL || block.getRelative(BlockFace.WEST).getType() == Material.PORTAL)
+        {
             this.plugin.log(Level.FINER, "Found Portal: East/West");
-            if (p.getLocation().getX() < block.getLocation().getX()) {
+            if(e.getLocation().getX() < block.getLocation().getX())
+            {
                 newVecX = -1 * myconst;
-            } else {
+            }
+            else
+            {
                 newVecX = 1 * myconst;
             }
-        } else {
+        }
+        else
+        {
             //NOrth/South
             this.plugin.log(Level.FINER, "Found Portal: North/South");
-            if (p.getLocation().getZ() < block.getLocation().getZ()) {
+            if(e.getLocation().getZ() < block.getLocation().getZ())
+            {
                 newVecZ = -1 * myconst;
-            } else {
+            }
+            else
+            {
                 newVecZ = 1 * myconst;
             }
         }
-        p.teleport(p.getLocation().clone().add(newVecX, .2, newVecZ));
-        p.setVelocity(new Vector(newVecX, .6, newVecZ));
+        e.teleport(e.getLocation().clone().add(newVecX, .2, newVecZ));
+        e.setVelocity(new Vector(newVecX, .6, newVecZ));
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public void onEntityPortalEnter(EntityPortalEnterEvent event) {
-        if (!(event.getEntity() instanceof Player)) {
-            return;
-        }
-
-        Player p = (Player) event.getEntity();
-        Location block = this.locationManipulation.getBlockLocation(p.getLocation());
-
-        if (!plugin.isHandledByNetherPortals(block)) {
-            return;
-        }
-
-        if(this.eventRecord.containsKey(p.getName())) {
-            // The the eventRecord shows this player was already trying to go somewhere.
-            if (this.locationManipulation.getBlockLocation(p.getLocation()).equals(this.eventRecord.get(p.getName()))) {
-                // The player has not moved, and we've already fired one event.
-                return;
-            } else {
-                // The player moved, potentially out of the portal, allow event to re-check.
-                this.eventRecord.put(p.getName(), this.locationManipulation.getBlockLocation(p.getLocation()));
-                // We'll need to clear this value...
-            }
-        } else {
-            this.eventRecord.put(p.getName(), this.locationManipulation.getBlockLocation(p.getLocation()));
-        }
-        MVPlayerTouchedPortalEvent playerTouchedPortalEvent = new MVPlayerTouchedPortalEvent(p, event.getLocation());
-        this.plugin.getServer().getPluginManager().callEvent(playerTouchedPortalEvent);
+    public void onEntityPortalEnter(EntityPortalEnterEvent event)
+    {
+        Entity e = event.getEntity();
+        Player p = (e instanceof Player) ? (Player)e : null;
         Location eventLocation = event.getLocation().clone();
-        if (!playerTouchedPortalEvent.canUseThisPortal()) {
-            // Someone else said the player is not allowed to go here.
-            this.shootPlayer(p, eventLocation.getBlock(), PortalType.NETHER);
-            this.plugin.log(Level.FINEST, "Someone request this player be kicked back!!");
-        }
-        if(playerTouchedPortalEvent.isCancelled()) {
-            this.plugin.log(Level.FINEST, "Someone cancelled the enter Event for NetherPortals!");
+        Location block = this.locationManipulation.getBlockLocation(e.getLocation());
+        if(!plugin.isHandledByNetherPortals(block))
+        {
             return;
         }
-
-        if (this.playerErrors.containsKey(p.getName())) {
-            Date lastTry = this.playerErrors.get(p.getName());
-            if (lastTry.getTime() + this.cooldown > new Date().getTime()) {
+        if(p != null)
+        {
+            if(this.eventRecord.containsKey(p.getName()))
+            {
+                // The the eventRecord shows this player was already trying to go somewhere.
+                if(this.locationManipulation.getBlockLocation(p.getLocation()).equals(this.eventRecord.get(p.getName())))
+                {
+                    // The player has not moved, and we've already fired one event.
+                    return;
+                }
+                else
+                {
+                    // The player moved, potentially out of the portal, allow event to re-check.
+                    this.eventRecord.put(p.getName(), this.locationManipulation.getBlockLocation(p.getLocation()));
+                    // We'll need to clear this value...
+                }
+            }
+            else
+            {
+                this.eventRecord.put(p.getName(), this.locationManipulation.getBlockLocation(p.getLocation()));
+            }
+            MVPlayerTouchedPortalEvent playerTouchedPortalEvent = new MVPlayerTouchedPortalEvent(p, event.getLocation());
+            this.plugin.getServer().getPluginManager().callEvent(playerTouchedPortalEvent);
+            if(!playerTouchedPortalEvent.canUseThisPortal())
+            {
+                // Someone else said the player is not allowed to go here.
+                this.shootEntity(p, eventLocation.getBlock(), PortalType.NETHER);
+                this.plugin.log(Level.FINEST, "Someone request this player be kicked back!!");
+            }
+            if(playerTouchedPortalEvent.isCancelled())
+            {
+                this.plugin.log(Level.FINEST, "Someone cancelled the enter Event for NetherPortals!");
                 return;
             }
-            this.playerErrors.remove(p.getName());
+            if(this.playerErrors.containsKey(p.getName()))
+            {
+                Date lastTry = this.playerErrors.get(p.getName());
+                if(lastTry.getTime() + this.cooldown > new Date().getTime())
+                {
+                    return;
+                }
+                this.playerErrors.remove(p.getName());
+            }
         }
-
-        PortalType type = PortalType.END; //we are too lazy to check if it's this one
-        if (event.getLocation().getBlock().getType() == Material.PORTAL) {
-            type = PortalType.NETHER;
-        }
-
+        PortalType type = (event.getLocation().getBlock().getType() == Material.PORTAL) ? PortalType.NETHER : PortalType.END;
         String currentWorld = event.getLocation().getWorld().getName();
         String linkedWorld = this.plugin.getWorldLink(event.getLocation().getWorld().getName(), type);
         Location currentLocation = event.getLocation();
-
         Location toLocation = null;
-
-        if (linkedWorld != null) {
-            toLocation = this.linkChecker.findNewTeleportLocation(currentLocation, linkedWorld, p);
-        } else if (this.nameChecker.isValidNetherName(currentWorld)) {
-            if (type == PortalType.NETHER) {
-                toLocation = this.linkChecker.findNewTeleportLocation(currentLocation, this.nameChecker.getNormalName(currentWorld, PortalType.NETHER), p);
-            } else {
-                toLocation = this.linkChecker.findNewTeleportLocation(currentLocation, this.nameChecker.getEndName(this.nameChecker.getNormalName(currentWorld, PortalType.NETHER)), p);
+        if(linkedWorld != null)
+        {
+            toLocation = this.linkChecker.findNewTeleportLocation(currentLocation, linkedWorld, e);
+        }
+        else if(this.nameChecker.isValidNetherName(currentWorld))
+        {
+            if(type == PortalType.NETHER)
+            {
+                toLocation = this.linkChecker.findNewTeleportLocation(currentLocation, this.nameChecker.getNormalName(currentWorld, PortalType.NETHER), e);
             }
-        } else if (this.nameChecker.isValidEndName(currentWorld)) {
-            if (type == PortalType.NETHER) {
-                toLocation = this.linkChecker.findNewTeleportLocation(currentLocation, this.nameChecker.getNetherName(this.nameChecker.getNormalName(currentWorld, PortalType.END)), p);
-            } else {
-                toLocation = this.linkChecker.findNewTeleportLocation(currentLocation, this.nameChecker.getNormalName(currentWorld, PortalType.END), p);
-            }
-        } else {
-            if(type == PortalType.END) {
-                toLocation = this.linkChecker.findNewTeleportLocation(currentLocation, this.nameChecker.getEndName(currentWorld), p);
-            } else {
-                toLocation = this.linkChecker.findNewTeleportLocation(currentLocation, this.nameChecker.getNetherName(currentWorld), p);
+            else
+            {
+                toLocation = this.linkChecker.findNewTeleportLocation(currentLocation, this.nameChecker.getEndName(this.nameChecker.getNormalName(currentWorld, PortalType.NETHER)), e);
             }
         }
-
-        if (toLocation == null) {
-            this.shootPlayer(p, eventLocation.getBlock(), type);
-            this.messaging.sendMessage(p, "This portal goes nowhere!", false);
-            if (type == PortalType.END) {
-                this.messaging.sendMessage(p, "No specific end world has been linked to this world and '" + this.nameChecker.getEndName(currentWorld) + "' is not a world.", true);
-            } else {
-                this.messaging.sendMessage(p, "No specific nether world has been linked to this world and '" + this.nameChecker.getNetherName(currentWorld) + "' is not a world.", true);
+        else if(this.nameChecker.isValidEndName(currentWorld))
+        {
+            if(type == PortalType.NETHER)
+            {
+                toLocation = this.linkChecker.findNewTeleportLocation(currentLocation, this.nameChecker.getNetherName(this.nameChecker.getNormalName(currentWorld, PortalType.END)), e);
+            }
+            else
+            {
+                toLocation = this.linkChecker.findNewTeleportLocation(currentLocation, this.nameChecker.getNormalName(currentWorld, PortalType.END), e);
+            }
+        }
+        else
+        {
+            if(type == PortalType.END)
+            {
+                toLocation = this.linkChecker.findNewTeleportLocation(currentLocation, this.nameChecker.getEndName(currentWorld), e);
+            }
+            else
+            {
+                toLocation = this.linkChecker.findNewTeleportLocation(currentLocation, this.nameChecker.getNetherName(currentWorld), e);
+            }
+        }
+        if(toLocation == null)
+        {
+            this.shootEntity(e, eventLocation.getBlock(), type);
+            if(p != null)
+            {
+                this.messaging.sendMessage(p, "This portal goes nowhere!", false);
+                if(type == PortalType.END)
+                {
+                    this.messaging.sendMessage(p, "No specific end world has been linked to this world and '" + this.nameChecker.getEndName(currentWorld) + "' is not a world.", true);
+                }
+                else
+                {
+                    this.messaging.sendMessage(p, "No specific nether world has been linked to this world and '" + this.nameChecker.getNetherName(currentWorld) + "' is not a world.", true);
+                }
             }
             return;
         }
-        MultiverseWorld fromWorld = this.worldManager.getMVWorld(p.getLocation().getWorld().getName());
+        MultiverseWorld fromWorld = this.worldManager.getMVWorld(e.getLocation().getWorld().getName());
         MultiverseWorld toWorld = this.worldManager.getMVWorld(toLocation.getWorld().getName());
-        if (fromWorld.getCBWorld().equals(toWorld.getCBWorld())) {
+        if(fromWorld.getCBWorld().equals(toWorld.getCBWorld()))
+        {
             // The player is Portaling to the same world.
-            this.plugin.log(Level.FINER, "Player '" + p.getName() + "' is portaling to the same world.");
-            return;
-        }
-        if (!pt.playerHasMoneyToEnter(fromWorld, toWorld, p, p, false)) {
-            System.out.println("BOOM");
-            this.shootPlayer(p, eventLocation.getBlock(), type);
-            this.plugin.log(Level.FINE, "Player '" + p.getName() + "' was DENIED ACCESS to '" + toWorld.getCBWorld().getName() +
-                    "' because they don't have the FUNDS required to enter.");
-            return;
-        }
-        if (this.plugin.getCore().getMVConfig().getEnforceAccess()) {
-            if (!pt.playerCanGoFromTo(fromWorld, toWorld, p, p)) {
-                this.shootPlayer(p, eventLocation.getBlock(), type);
-                this.plugin.log(Level.FINE, "Player '" + p.getName() + "' was DENIED ACCESS to '" + toWorld.getCBWorld().getName() +
-                        "' because they don't have: multiverse.access." + toWorld.getCBWorld().getName());
+            if(p != null)
+            {
+                this.plugin.log(Level.FINER, "Player '" + p.getName() + "' is portaling to the same world.");
             }
-        } else {
-            this.plugin.log(Level.FINE, "Player '" + p.getName() + "' was allowed to go to '" + toWorld.getCBWorld().getName() + "' because enforceaccess is off.");
+            return;
+        }
+        if(p != null)
+        {
+            if(!pt.playerHasMoneyToEnter(fromWorld, toWorld, p, p, false))
+            {
+                System.out.println("BOOM");
+                this.shootEntity(p, eventLocation.getBlock(), type);
+                this.plugin.log(Level.FINE, "Player '" + p.getName() + "' was DENIED ACCESS to '" + toWorld.getCBWorld().getName() + "' because they don't have the FUNDS required to enter.");
+                return;
+            }
+            if(this.plugin.getCore().getMVConfig().getEnforceAccess())
+            {
+                if(!pt.playerCanGoFromTo(fromWorld, toWorld, p, p))
+                {
+                    this.shootEntity(p, eventLocation.getBlock(), type);
+                    this.plugin.log(Level.FINE, "Player '" + p.getName() + "' was DENIED ACCESS to '" + toWorld.getCBWorld().getName() + "' because they don't have: multiverse.access." + toWorld.getCBWorld().getName());
+                }
+            }
+            else
+            {
+                this.plugin.log(Level.FINE, "Player '" + p.getName() + "' was allowed to go to '" + toWorld.getCBWorld().getName() + "' because enforceaccess is off.");
+            }
         }
     }
 }
