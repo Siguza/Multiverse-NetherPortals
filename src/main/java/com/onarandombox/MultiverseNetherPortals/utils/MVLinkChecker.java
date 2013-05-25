@@ -6,7 +6,7 @@ import com.onarandombox.MultiverseNetherPortals.MultiverseNetherPortals;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerPortalEvent;
+import org.bukkit.event.entity.EntityPortalEvent;
 
 import java.util.logging.Level;
 
@@ -52,18 +52,29 @@ public class MVLinkChecker {
         return null;
     }
 
-    public void getNewTeleportLocation(PlayerPortalEvent event, Location fromLocation, String worldstring) {
+    public void getNewTeleportLocation(EntityPortalEvent event, Location fromLocation, String worldstring)
+    {
         MultiverseWorld tpto = this.worldManager.getMVWorld(worldstring);
-
-        if (tpto == null) {
+        Player p = (event.getEntity() instanceof Player) ? (Player)event.getEntity() : null;
+        if(tpto == null)
+        {
             this.plugin.log(Level.FINE, "Can't find " + worldstring);
-        } else if (!this.plugin.getCore().getMVPerms().canEnterWorld(event.getPlayer(), tpto)) {
-            this.plugin.log(Level.WARNING, "Player " + event.getPlayer().getName() + " can't enter world " + worldstring);
-        } else if (!this.worldManager.isMVWorld(fromLocation.getWorld().getName())) {
+        }
+        else if((p != null) && !this.plugin.getCore().getMVPerms().canEnterWorld(p, tpto))
+        {
+            this.plugin.log(Level.WARNING, "Player " + p.getName() + " can't enter world " + worldstring);
+        }
+        else if(!this.worldManager.isMVWorld(fromLocation.getWorld().getName()))
+        {
             this.plugin.log(Level.WARNING, "World " + fromLocation.getWorld().getName() + " is not a Multiverse world");
-        } else {
-            this.plugin.log(Level.FINE, "Getting new teleport location for player " + event.getPlayer().getName() + " to world " + worldstring);
-
+        }
+        else
+        {
+            if(p != null)
+            {
+                this.plugin.log(Level.FINE, "Getting new teleport location for player " + p.getName() + " to world " + worldstring);
+            }
+            
             // Set the output location to the same XYZ coords but different world
             double toScaling = tpto.getScaling();
             double fromScaling = this.worldManager.getMVWorld(event.getFrom().getWorld().getName()).getScaling();
@@ -74,7 +85,8 @@ public class MVLinkChecker {
         event.setTo(fromLocation);
     }
 
-    private Location getScaledLocation(Location fromLocation, double fromScaling, double toScaling) {
+    private Location getScaledLocation(Location fromLocation, double fromScaling, double toScaling)
+    {
         double scaling = fromScaling / toScaling;
         fromLocation.setX(fromLocation.getX() * scaling);
         fromLocation.setZ(fromLocation.getZ() * scaling);

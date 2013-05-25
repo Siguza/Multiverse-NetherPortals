@@ -15,7 +15,47 @@
             <id>OnARandomBox</id>
             <url>http://repo.onarandombox.com/content/groups/public/</url>
         </repository>
+        <repository>
+            <id>bukkit-repo</id>
+            <url>http://repo.bukkit.org/content/groups/public/</url>
+        </repository>
     </repositories>
+    <dependencies>
+        <dependency>
+            <groupId>org.bukkit</groupId>
+            <artifactId>craftbukkit</artifactId>
+            <version>1.5.2-R0.1-SNAPSHOT</version>
+            <type>jar</type>
+            <scope>compile</scope>
+        </dependency>
+        <!-- Start of Multiverse Core Dependency -->
+        <dependency>
+            <groupId>com.onarandombox.multiversecore</groupId>
+            <artifactId>Multiverse-Core</artifactId>
+            <version>2.5</version>
+            <type>jar</type>
+            <scope>compile</scope>
+        </dependency>
+        <!-- End of Multiverse Core Dependency -->
+        <!-- Start of Multiverse Portals Dependency -->
+        <dependency>
+            <groupId>com.onarandombox.multiverseportals</groupId>
+            <artifactId>Multiverse-Portals</artifactId>
+            <version>2.5</version>
+            <type>jar</type>
+            <scope>compile</scope>
+        </dependency>
+        <!-- End of Multiverse Portals Dependency -->
+        <!-- Start of Logging Dependency -->
+        <dependency>
+            <groupId>com.dumptruckman.minecraft</groupId>
+            <artifactId>Logging</artifactId>
+            <version>1.0.6</version>
+            <type>jar</type>
+            <scope>compile</scope>
+        </dependency>
+        <!-- End of Logging Dependency -->
+    </dependencies>
 
     <!-- Profiles are used to detect whether this is a local or Jenkins build
          and adjust the build number accordingly -->
@@ -141,35 +181,6 @@
             </plugin>
         </plugins>
     </build>
-    <dependencies>
-        <!-- Start of Multiverse Core Dependency -->
-        <dependency>
-            <groupId>com.onarandombox.multiversecore</groupId>
-            <artifactId>Multiverse-Core</artifactId>
-            <version>2.5</version>
-            <type>jar</type>
-            <scope>compile</scope>
-        </dependency>
-        <!-- End of Multiverse Core Dependency -->
-        <!-- Start of Multiverse Portals Dependency -->
-        <dependency>
-            <groupId>com.onarandombox.multiverseportals</groupId>
-            <artifactId>Multiverse-Portals</artifactId>
-            <version>2.5</version>
-            <type>jar</type>
-            <scope>compile</scope>
-        </dependency>
-        <!-- End of Multiverse Portals Dependency -->
-        <!-- Start of Logging Dependency -->
-        <dependency>
-            <groupId>com.dumptruckman.minecraft</groupId>
-            <artifactId>Logging</artifactId>
-            <version>1.0.6</version>
-            <type>jar</type>
-            <scope>compile</scope>
-        </dependency>
-        <!-- End of Logging Dependency -->
-    </dependencies>
     <distributionManagement>
         <repository>
             <id>OnARandomBox</id>

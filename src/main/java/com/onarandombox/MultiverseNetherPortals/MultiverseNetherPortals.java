@@ -10,7 +10,7 @@ import com.onarandombox.MultiverseNetherPortals.commands.UnlinkCommand;
 import com.onarandombox.MultiverseNetherPortals.enums.PortalType;
 import com.onarandombox.MultiverseNetherPortals.listeners.MVNPCoreListener;
 import com.onarandombox.MultiverseNetherPortals.listeners.MVNPEntityListener;
-import com.onarandombox.MultiverseNetherPortals.listeners.MVNPPlayerListener;
+//import com.onarandombox.MultiverseNetherPortals.listeners.MVNPPlayerListener;
 import com.onarandombox.MultiverseNetherPortals.listeners.MVNPPluginListener;
 import com.onarandombox.MultiversePortals.MultiversePortals;
 import com.pneumaticraft.commandhandler.multiverse.CommandHandler;
@@ -39,7 +39,7 @@ public class MultiverseNetherPortals extends JavaPlugin implements MVPlugin {
     protected MultiverseCore core;
     protected Plugin multiversePortals;
     protected MVNPPluginListener pluginListener;
-    protected MVNPPlayerListener playerListener;
+    //protected MVNPPlayerListener playerListener;
     protected MVNPCoreListener customListener;
     protected FileConfiguration MVNPconfiguration;
     private static final String DEFAULT_NETHER_SUFFIX = "_nether";
@@ -80,12 +80,12 @@ public class MultiverseNetherPortals extends JavaPlugin implements MVPlugin {
         // As soon as we know MVCore was found, we can use the debug log!
 
         this.pluginListener = new MVNPPluginListener(this);
-        this.playerListener = new MVNPPlayerListener(this);
+        //this.playerListener = new MVNPPlayerListener(this);
         this.entityListener = new MVNPEntityListener(this);
         this.customListener = new MVNPCoreListener(this);
         PluginManager pm = this.getServer().getPluginManager();
         pm.registerEvents(this.pluginListener, this);
-        pm.registerEvents(this.playerListener, this);
+        //pm.registerEvents(this.playerListener, this);
         pm.registerEvents(this.entityListener, this);
         pm.registerEvents(this.customListener, this);
 
